@@ -147,11 +147,11 @@ app.get('/api/users/:_id/logs', async (req, res) => {
     // let date;
     let from = req.query.from; // Assuming query string for dates
     let to = req.query.to;
-    const limit =req.query.limit; // Default limit
+    let limit =req.query.limit; // Default limit
     // from=new Date(from).toDateString();
     // to=new Date(to).toDateString();
     // const logs = await fetchLogs( from, to, limit);
-    console.log({ from: from, to: from, limit: limit })
+    console.log({ from: from, to: to, limit: limit })
 
 
     // console.log(userName)
@@ -182,21 +182,38 @@ app.get('/api/users/:_id/logs', async (req, res) => {
       .then(async (results) => {
 
 
-        let exercise = exerciseModel.find({ userId: id });
+        let exercise = await exerciseModel.find({ userId: id });
 
-        if (from) {
-          exercise = exercise.where('date').gte(new Date(from));
-        }
+       
+         // Filter logs based on date range
+    if (from || to) {
+      exercise = exercise.filter(log => {
+        const logDate = new Date(log.date);
+        return (!from || logDate >= new Date(from)) && (!to || logDate <= new Date(to));
+      });
+    }
 
-        if (to) {
-          exercise = exercise.where('date').lte(new Date(to));
-        }
+    // Limit the number of logs if limit is provided
+    if (limit) {
+      exercise = exercise.slice(0, parseInt(limit));
+    }
 
-        if (limit) {
-          exercise = exercise.limit(limit);
-        }
+        // if (from) {
+        //   console.log(from)
+        //   exercise = exercise.where('date').gte(from);
+        // }
 
-        exercise = await exercise;
+        // if (to) {
+        //   console.log(to)
+        //   exercise = exercise.where('date').lte(to);
+        // }
+
+        // if (limit) {
+          
+        //   exercise = exercise.limit(limit);
+        // }
+
+        // exercise = await exercise;
 
         exercises = await exercise.map(entry => {
           return {
